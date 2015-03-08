@@ -3,18 +3,23 @@ import cv2
 import glob
 import os
 os.chdir(".")
+default_save_dir = 'processed/'
 
+if not os.path.exists(default_save_dir):
+    os.makedirs(default_save_dir)
+    
 ##mouse callback function
+mode = 1
 drawing = False # true if mouse is pressed
 def update_mask(event,x,y,flags,param):
-    global drawing,mask
+    global drawing,mask,mode
 
     if event == cv2.EVENT_LBUTTONDOWN:
         drawing = True
-        mask[y,x] = 1
+        mask[y,x] = mode
     elif event == cv2.EVENT_MOUSEMOVE:
         if drawing == True:
-            mask[y,x] = 1
+            mask[y,x] = mode
     elif event == cv2.EVENT_LBUTTONUP:
         drawing = False
             
@@ -29,6 +34,8 @@ cv2.setMouseCallback("Original Image", update_mask)
 
 for file in glob.glob("*.jpg"):
 
+    print 'Processing image ' + file
+    
     ##satisfaction flag
     satisfied = False
 
@@ -65,13 +72,14 @@ for file in glob.glob("*.jpg"):
         ##display the output
         cv2.imshow("Foreground", foreground)
         cv2.imshow("Original Image", img)
-        cv2.imshow("Mask", mask)
 
         ##poll untill user inputs 'y' or 'n' key
         while True:
             key = cv2.waitKey(1)
             if (key == ord('y') or key == ord('Y')):
                 satisfied = True
+                print 'Saving output..'
+                cv2.imwrite(default_save_dir + file, foreground)
                 break
             elif (key == ord('n') or key == ord('N')):
                 satisfied = False
@@ -80,6 +88,12 @@ for file in glob.glob("*.jpg"):
             elif (key == ord('r') or key == ord('R')):  ###reset mask
                 print 'Resetting the mask..'
                 mask = np.zeros((height, width),np.uint8)
+            ##foreground selection tool
+            elif (key == ord('f') or key == ord('F')):
+                mode = 1
+            ##background selection tool
+            elif (key == ord('b') or key == ord('B')):
+                mode = 0
 
 cv2.destroyAllWindows()
 
