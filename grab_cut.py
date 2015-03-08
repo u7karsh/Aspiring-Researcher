@@ -1,5 +1,8 @@
 import numpy as np
 import cv2
+import glob
+import os
+os.chdir(".")
 
 ##mouse callback function
 drawing = False # true if mouse is pressed
@@ -24,57 +27,59 @@ width_margin = 10.0
 cv2.namedWindow("Original Image")
 cv2.setMouseCallback("Original Image", update_mask)
 
-##satisfaction flag
-satisfied = False
+for file in glob.glob("*.jpg"):
 
-##init flag
-init = 0
+    ##satisfaction flag
+    satisfied = False
 
-#read the image
-img = cv2.imread('messi5.jpg')
+    ##init flag
+    init = 0
 
-#compute the size of image
-height, width = img.shape[:2]
+    #read the image
+    img = cv2.imread(file)
 
-##mask for grab cut algo
-mask = np.zeros((height, width),np.uint8)
+    #compute the size of image
+    height, width = img.shape[:2]
 
-##auto bounding box generation
-rect = (int((width_margin/200)*width),int((height_margin/200)*height),int(width-(width_margin/100)*width-1),int(height-(height_margin/100)*height-1))
+    ##mask for grab cut algo
+    mask = np.zeros((height, width),np.uint8)
 
-while not(satisfied):
-        
-    ###grab cut algorithm
-    if init == 0:
-        bgdModel = np.zeros((1,65),np.float64)
-        fgdModel = np.zeros((1,65),np.float64)
-        cv2.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_RECT)
-        init = 1
-    else:
-        cv2.grabCut(img,mask,None,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_MASK)
+    ##auto bounding box generation
+    rect = (int((width_margin/200)*width),int((height_margin/200)*height),int(width-(width_margin/100)*width-1),int(height-(height_margin/100)*height-1))
 
-    ##mask out the image
-    mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
-    foreground = img*mask2[:,:,np.newaxis]
+    while not(satisfied):
+            
+        ###grab cut algorithm
+        if init == 0:
+            bgdModel = np.zeros((1,65),np.float64)
+            fgdModel = np.zeros((1,65),np.float64)
+            cv2.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_RECT)
+            init = 1
+        else:
+            cv2.grabCut(img,mask,None,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_MASK)
 
-    ##display the output
-    cv2.imshow("Foreground", foreground)
-    cv2.imshow("Original Image", img)
-    cv2.imshow("Mask", mask)
+        ##mask out the image
+        mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
+        foreground = img*mask2[:,:,np.newaxis]
 
-    ##poll untill user inputs 'y' or 'n' key
-    while True:
-        key = cv2.waitKey(1)
-        if (key == ord('y') or key == ord('Y')):
-            satisfied = True
-            break
-        elif (key == ord('n') or key == ord('N')):
-            satisfied = False
-            break
-        ###caution.. use this command wisely..
-        elif (key == ord('r') or key == ord('R')):  ###reset mask
-            print 'Resetting the mask..'
-            mask = np.zeros((height, width),np.uint8)
+        ##display the output
+        cv2.imshow("Foreground", foreground)
+        cv2.imshow("Original Image", img)
+        cv2.imshow("Mask", mask)
+
+        ##poll untill user inputs 'y' or 'n' key
+        while True:
+            key = cv2.waitKey(1)
+            if (key == ord('y') or key == ord('Y')):
+                satisfied = True
+                break
+            elif (key == ord('n') or key == ord('N')):
+                satisfied = False
+                break
+            ###caution.. use this command wisely..
+            elif (key == ord('r') or key == ord('R')):  ###reset mask
+                print 'Resetting the mask..'
+                mask = np.zeros((height, width),np.uint8)
 
 cv2.destroyAllWindows()
 
